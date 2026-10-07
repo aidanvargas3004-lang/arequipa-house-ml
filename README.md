@@ -86,6 +86,8 @@ flask --app wsgi bootstrap
 gunicorn wsgi:app --workers 1 --threads 4 --timeout 120
 ```
 
+**Creación manual con pgAdmin:** ejecuta [`docs/01_crear_base_postgresql.sql`](docs/01_crear_base_postgresql.sql) (usuario y base) y luego [`docs/02_tablas_postgresql.sql`](docs/02_tablas_postgresql.sql) (11 tablas, conectado a `arequipa_house`). También puedes omitirlos: la aplicación crea las tablas sola al iniciar.
+
 El esquema SQL de PostgreSQL está en [`docs/schema_postgresql.sql`](docs/schema_postgresql.sql) y el diagrama ER + diccionario de datos en [`docs/modelo_datos.md`](docs/modelo_datos.md) (se regeneran con `PYTHONPATH=. python scripts/export_schema.py`).
 
 También puedes levantar todo con PostgreSQL local: `docker compose up --build` → http://localhost:8000.
