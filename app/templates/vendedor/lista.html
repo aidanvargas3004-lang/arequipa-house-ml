@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+{% import '_macros.html' as m with context %}
+{% block title %}Mis publicaciones{% endblock %}
+{% block contenido %}
+<div class="mb-5 flex flex-wrap items-center justify-between gap-3">
+  <h1 class="text-2xl font-bold text-slate-900">Mis publicaciones</h1>
+  <div class="flex gap-2">
+    <a class="btn btn-outline" href="{{ url_for('tasacion.tasar') }}">Tasar una vivienda</a>
+    <a class="btn btn-primary" href="{{ url_for('vendedor.publicar') }}">+ Publicar vivienda</a>
+  </div>
+</div>
+<div class="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
+  {% for est, etq in [('aprobada','Publicadas'),('pendiente','En revisión'),('rechazada','Rechazadas'),('vendida','Vendidas')] %}
+    <div class="card !p-4"><p class="text-2xl font-bold text-blue-900">{{ cuenta.get(est, 0) }}</p><p class="text-sm text-slate-500">{{ etq }}</p></div>
+  {% endfor %}
+</div>
+{% if props %}
+<div class="space-y-3">
+  {% for p in props %}
+  <article class="card flex flex-col gap-4 md:flex-row">
+    <a href="{{ url_for('propiedades.detalle', propiedad_id=p.id) }}" class="block w-full flex-none overflow-hidden rounded-lg md:w-52">{{ m.foto(p, 'h-36 w-full object-cover') }}</a>
+    <div class="flex-1">
+      <div class="flex flex-wrap items-center gap-2">
+        <h2 class="font-semibold text-slate-900">{{ p.titulo }}</h2>{{ m.estado_badge(p.estado) }}
+      </div>
+      <p class="text-sm text-slate-500">{{ p.distrito }} · {{ p.area_construida|m2 }} · {{ p.habitaciones }} hab. · publicada {{ p.creado_en|fecha(False) }}</p>
+      <p class="mt-1 text-lg font-bold text-blue-900">{{ p.precio|soles }}</p>
+      {% if p.estado == 'rechazada' and p.motivo_rechazo %}<p class="mt-1 rounded-md bg-red-50 px-3 py-2 text-sm text-red-800"><strong>Motivo del rechazo:</strong> {{ p.motivo_rechazo }}</p>{% endif %}
+      {% if p.estado == 'pendiente' %}<p class="mt-1 text-sm text-amber-700">En revisión por el administrador.</p>{% endif %}
+    </div>
+    <div class="flex flex-row flex-wrap items-start gap-2 md:w-44 md:flex-col">
+      <a class="btn btn-outline btn-sm" href="{{ url_for('propiedades.detalle', propiedad_id=p.id) }}">Ver</a>
+      {% if p.estado != 'vendida' %}<a class="btn btn-outline btn-sm" href="{{ url_for('vendedor.editar', propiedad_id=p.id) }}">Editar</a>{% endif %}
+      {% if p.estado == 'aprobada' %}
+      <details class="w-full">
+        <summary class="btn btn-ok btn-sm cursor-pointer list-none">Marcar vendida</summary>
+        <form method="post" action="{{ url_for('vendedor.marcar_vendida', propiedad_id=p.id) }}" class="mt-2 space-y-2 rounded-lg border border-slate-200 bg-slate-50 p-3">
+          {{ m.csrf() }}
+          {{ m.campo('precio_final', 'Precio final de venta (S/)', p.precio|int, 'number', extra='required min="20000" step="1000"') }}
+          <label class="flex items-start gap-2 text-xs text-slate-600"><input type="checkbox" name="aportar_dataset" value="1" checked class="mt-0.5"> Aportar este dato al histórico para mejorar el modelo.</label>
+          <button class="btn btn-ok btn-sm w-full" data-once>Confirmar</button>
+        </form>
+      </details>
+      {% endif %}
+      <form method="post" action="{{ url_for('vendedor.eliminar', propiedad_id=p.id) }}" data-confirm="¿Eliminar definitivamente esta publicación, sus fotos y mensajes?">{{ m.csrf() }}<button class="btn btn-outline btn-sm text-red-600">Eliminar</button></form>
+    </div>
+  </article>
+  {% endfor %}
+</div>
+{% else %}
+<div class="card py-12 text-center text-slate-500"><p>Aún no has publicado viviendas.</p><a class="btn btn-primary mt-4" href="{{ url_for('vendedor.publicar') }}">Publicar mi primera vivienda</a></div>
+{% endif %}
+{% endblock %}

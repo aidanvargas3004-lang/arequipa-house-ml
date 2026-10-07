@@ -1,0 +1,53 @@
+{% import '_macros.html' as m with context %}
+<fieldset class="space-y-4">
+  <legend class="mb-2 text-sm font-semibold uppercase tracking-wide text-blue-900">Ubicación y tipo</legend>
+  <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    {{ m.selector('tipo', 'Tipo de inmueble', TIPOS, v.tipo, extra='data-tipo') }}
+    {{ m.selector('distrito', 'Distrito', DISTRITOS, v.distrito) }}
+    {{ m.campo('area_construida', 'Área construida (m²)', v.area_construida, 'number', extra='min="15" max="3000" step="0.1" required inputmode="decimal"') }}
+    <div data-solo-casa>{{ m.campo('area_terreno', 'Área del terreno (m²)', v.area_terreno, 'number', 'Vacío = igual al área por piso.', 'min="10" max="20000" step="0.1" inputmode="decimal"') }}</div>
+  </div>
+</fieldset>
+
+<fieldset class="mt-6 space-y-4">
+  <legend class="mb-2 text-sm font-semibold uppercase tracking-wide text-blue-900">Distribución y antigüedad</legend>
+  <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+    {{ m.campo('habitaciones', 'Habitaciones', v.habitaciones, 'number', extra='min="0" max="15" step="1" required') }}
+    {{ m.campo('banos', 'Baños', v.banos, 'number', extra='min="0" max="12" step="1" required') }}
+    <div data-solo-casa>{{ m.campo('pisos', 'Pisos', v.pisos, 'number', extra='min="1" max="8" step="1"') }}</div>
+    {{ m.campo('cochera', 'Cocheras', v.cochera, 'number', extra='min="0" max="8" step="1"') }}
+    {{ m.campo('antiguedad', 'Antigüedad (años)', v.antiguedad, 'number', '0 = a estrenar', 'min="0" max="100" step="1" required') }}
+  </div>
+</fieldset>
+
+<fieldset class="mt-6 space-y-4">
+  <legend class="mb-2 text-sm font-semibold uppercase tracking-wide text-blue-900">Calidad</legend>
+  <div class="grid gap-4 sm:grid-cols-2">
+    {{ m.selector('estado_conservacion', 'Estado de conservación', ESTADOS, v.estado_conservacion) }}
+    {{ m.selector('acabados', 'Calidad de acabados', ACABADOS, v.acabados) }}
+  </div>
+</fieldset>
+
+<fieldset class="mt-6 space-y-4">
+  <legend class="mb-2 text-sm font-semibold uppercase tracking-wide text-blue-900">Comodidades y entorno</legend>
+  <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+    {{ m.casilla('jardin', 'Jardín', v.jardin) }}
+    {{ m.casilla('piscina', 'Piscina', v.piscina) }}
+    {{ m.casilla('ascensor', 'Ascensor', v.ascensor) }}
+    {{ m.casilla('seguridad', 'Seguridad / vigilancia', v.seguridad) }}
+    {{ m.casilla('cerca_colegios', 'Cerca de colegios', v.cerca_colegios) }}
+    {{ m.casilla('cerca_hospitales', 'Cerca de hospitales', v.cerca_hospitales) }}
+    {{ m.casilla('cerca_comercial', 'Cerca de centros comerciales', v.cerca_comercial) }}
+    {{ m.casilla('transporte_publico', 'Acceso a transporte público', v.transporte_publico) }}
+  </div>
+</fieldset>
+<script>
+  (function () {
+    var tipo = document.querySelector('[data-tipo]');
+    function alternar() {
+      var esDepto = tipo && tipo.value === 'Departamento';
+      document.querySelectorAll('[data-solo-casa]').forEach(function (el) { el.classList.toggle('hidden', esDepto); });
+    }
+    if (tipo) { tipo.addEventListener('change', alternar); alternar(); }
+  })();
+</script>

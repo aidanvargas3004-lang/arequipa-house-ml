@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+{% import '_macros.html' as m with context %}
+{% block title %}Visitas{% endblock %}
+{% block contenido %}
+<h1 class="mb-5 text-2xl font-bold text-slate-900">Visitas</h1>
+
+{% if current_user.rol == 'vendedor' %}
+<section class="mb-8">
+  <h2 class="mb-3 font-semibold text-slate-900">Solicitudes recibidas en mis viviendas</h2>
+  {% if recibidas %}
+  <div class="space-y-3">
+    {% for v in recibidas %}
+    <div class="card flex flex-col gap-3 md:flex-row md:items-center">
+      <div class="flex-1">
+        <p class="font-semibold text-slate-900"><a class="hover:underline" href="{{ url_for('propiedades.detalle', propiedad_id=v.propiedad_id) }}">{{ v.propiedad.titulo }}</a> {{ m.estado_badge(v.estado) }}</p>
+        <p class="text-sm text-slate-600">{{ v.comprador.nombre }}{% if v.comprador.telefono %} · {{ v.comprador.telefono }}{% endif %} · {{ v.fecha_hora|fecha_local }} · {{ v.modalidad }}</p>
+        {% if v.comentario %}<p class="text-sm text-slate-500">“{{ v.comentario }}”</p>{% endif %}
+        {% if v.respuesta %}<p class="text-sm text-slate-500">Tu respuesta: {{ v.respuesta }}</p>{% endif %}
+      </div>
+      {% if v.estado == 'pendiente' %}
+      <form method="post" action="{{ url_for('interaccion.responder_visita', visita_id=v.id) }}" class="flex flex-col gap-2 md:w-72">
+        {{ m.csrf() }}
+        <input class="input" name="respuesta" maxlength="300" placeholder="Nota para el comprador (opcional)">
+        <div class="flex gap-2">
+          <button name="accion" value="confirmar" class="btn btn-ok btn-sm flex-1">Confirmar</button>
+          <button name="accion" value="rechazar" class="btn btn-outline btn-sm flex-1 text-red-600">Rechazar</button>
+        </div>
+      </form>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}<div class="card text-sm text-slate-500">No has recibido solicitudes de visita.</div>{% endif %}
+</section>
+{% endif %}
+
+<section>
+  <h2 class="mb-3 font-semibold text-slate-900">Mis solicitudes de visita</h2>
+  {% if mias %}
+  <div class="card overflow-x-auto !p-0">
+    <table class="min-w-full divide-y divide-slate-200">
+      <thead class="bg-slate-50"><tr><th class="th">Vivienda</th><th class="th">Fecha y hora</th><th class="th">Modalidad</th><th class="th">Estado</th><th class="th">Respuesta</th><th class="th"></th></tr></thead>
+      <tbody class="divide-y divide-slate-100">
+      {% for v in mias %}
+        <tr>
+          <td class="td"><a class="text-blue-800 hover:underline" href="{{ url_for('propiedades.detalle', propiedad_id=v.propiedad_id) }}">{{ v.propiedad.titulo }}</a></td>
+          <td class="td whitespace-nowrap">{{ v.fecha_hora|fecha_local }}</td>
+          <td class="td">{{ v.modalidad|capitalize }}</td>
+          <td class="td">{{ m.estado_badge(v.estado) }}</td>
+          <td class="td text-xs">{{ v.respuesta or '—' }}</td>
+          <td class="td text-right">{% if v.estado in ('pendiente','confirmada') %}<form method="post" action="{{ url_for('interaccion.cancelar_visita', visita_id=v.id) }}" data-confirm="¿Cancelar esta visita?">{{ m.csrf() }}<button class="btn btn-outline btn-sm text-red-600">Cancelar</button></form>{% endif %}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}<div class="card text-sm text-slate-500">No has solicitado visitas. Puedes hacerlo desde el detalle de una propiedad.</div>{% endif %}
+</section>
+{% endblock %}

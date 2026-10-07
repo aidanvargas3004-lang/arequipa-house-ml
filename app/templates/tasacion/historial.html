@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+{% import '_macros.html' as m with context %}
+{% block title %}Mis tasaciones{% endblock %}
+{% block contenido %}
+<div class="mb-5 flex items-center justify-between">
+  <h1 class="text-2xl font-bold text-slate-900">Historial de tasaciones</h1>
+  <a class="btn btn-primary" href="{{ url_for('tasacion.tasar') }}">Nueva tasación</a>
+</div>
+{% if pag.items %}
+<div class="card overflow-x-auto !p-0">
+  <table class="min-w-full divide-y divide-slate-200">
+    <thead class="bg-slate-50"><tr>
+      <th class="th">Fecha</th><th class="th">Vivienda</th><th class="th">Área</th><th class="th">Precio estimado</th><th class="th">Rango</th><th class="th">Modelo</th><th class="th"></th>
+    </tr></thead>
+    <tbody class="divide-y divide-slate-100">
+    {% for t in pag.items %}
+      <tr class="hover:bg-slate-50">
+        <td class="td whitespace-nowrap">{{ t.creado_en|fecha }}</td>
+        <td class="td">{{ t.datos.tipo }} · {{ t.datos.distrito }}</td>
+        <td class="td whitespace-nowrap">{{ t.datos.area_construida|m2 }}</td>
+        <td class="td font-semibold text-blue-900">{{ t.precio_estimado|soles }}</td>
+        <td class="td whitespace-nowrap text-xs text-slate-500">{{ t.precio_min|soles }} – {{ t.precio_max|soles }}</td>
+        <td class="td text-xs">{{ ('v' ~ t.modelo.version) if t.modelo else '—' }}</td>
+        <td class="td whitespace-nowrap text-right">
+          <a class="btn btn-outline btn-sm" href="{{ url_for('tasacion.detalle', tasacion_id=t.id) }}">Ver</a>
+          <form class="inline" method="post" action="{{ url_for('tasacion.eliminar', tasacion_id=t.id) }}" data-confirm="¿Eliminar esta tasación del historial?">{{ m.csrf() }}<button class="btn btn-outline btn-sm text-red-600">Eliminar</button></form>
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{{ m.paginacion(pag, 'tasacion.historial', {}) }}
+{% else %}
+<div class="card py-12 text-center text-slate-500">
+  <p>Todavía no has realizado tasaciones.</p>
+  <a class="btn btn-primary mt-4" href="{{ url_for('tasacion.tasar') }}">Hacer mi primera tasación</a>
+</div>
+{% endif %}
+{% endblock %}

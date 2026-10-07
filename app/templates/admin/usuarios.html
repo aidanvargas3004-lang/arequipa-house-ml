@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+{% import '_macros.html' as m with context %}
+{% block title %}Usuarios{% endblock %}
+{% block contenido %}
+{% include 'admin/_nav.html' %}
+<div class="mb-4 flex flex-wrap items-end justify-between gap-3">
+  <h1 class="text-2xl font-bold text-slate-900">Usuarios</h1>
+  <form method="get" class="flex flex-wrap items-end gap-2">
+    <div>{{ m.campo('q', 'Buscar', q, extra='placeholder="Nombre o correo"') }}</div>
+    <div>{{ m.selector('rol', 'Rol', roles, rol, 'Todos') }}</div>
+    <button class="btn btn-primary">Filtrar</button>
+  </form>
+</div>
+
+<details class="card mb-5">
+  <summary class="cursor-pointer font-semibold text-blue-900">+ Crear usuario</summary>
+  <form method="post" action="{{ url_for('admin.usuario_nuevo') }}" class="mt-4 grid gap-3 md:grid-cols-5">
+    {{ m.csrf() }}
+    {{ m.campo('nombre', 'Nombre completo', '', extra='required') }}
+    {{ m.campo('email', 'Correo', '', 'email', extra='required') }}
+    {{ m.selector('rol', 'Rol', roles, 'comprador') }}
+    {{ m.campo('password', 'Contraseña', '', 'password', extra='required minlength="8" autocomplete="new-password"') }}
+    <div class="flex items-end"><button class="btn btn-primary w-full">Crear</button></div>
+  </form>
+</details>
+
+{% for u in pag.items %}<form method="post" action="{{ url_for('admin.usuario_actualizar', usuario_id=u.id) }}" id="u{{ u.id }}">{{ m.csrf() }}</form>{% endfor %}
+<div class="card overflow-x-auto !p-0">
+  <table class="min-w-full divide-y divide-slate-200">
+    <thead class="bg-slate-50"><tr><th class="th">Usuario</th><th class="th">Registro</th><th class="th">Último acceso</th><th class="th">Rol</th><th class="th">Activo</th><th class="th"></th></tr></thead>
+    <tbody class="divide-y divide-slate-100">
+    {% for u in pag.items %}
+      <tr>
+        <td class="td"><p class="font-medium text-slate-900">{{ u.nombre }}</p><p class="text-xs text-slate-500">{{ u.email }}{% if u.telefono %} · {{ u.telefono }}{% endif %}</p></td>
+        <td class="td whitespace-nowrap">{{ u.creado_en|fecha(False) }}</td>
+        <td class="td whitespace-nowrap">{{ u.ultimo_acceso|fecha if u.ultimo_acceso else '—' }}</td>
+        <td class="td"><select name="rol" form="u{{ u.id }}" class="input !w-auto !py-1" {{ 'disabled' if u.id == current_user.id }}>{% for r in roles %}<option value="{{ r }}" {{ 'selected' if r == u.rol }}>{{ r }}</option>{% endfor %}</select></td>
+        <td class="td"><input type="checkbox" name="activo" value="1" form="u{{ u.id }}" {{ 'checked' if u.activo }} {{ 'disabled' if u.id == current_user.id }} class="h-4 w-4 rounded border-slate-300"></td>
+        <td class="td text-right">{% if u.id != current_user.id %}<button form="u{{ u.id }}" class="btn btn-outline btn-sm">Guardar</button>{% else %}<span class="text-xs text-slate-400">Tu cuenta</span>{% endif %}</td>
+      </tr>
+    {% else %}
+      <tr><td colspan="6" class="td py-8 text-center text-slate-500">Sin resultados.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{{ m.paginacion(pag, 'admin.usuarios', {'q': q, 'rol': rol}) }}
+{% endblock %}

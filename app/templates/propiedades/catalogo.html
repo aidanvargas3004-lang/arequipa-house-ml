@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+{% import '_macros.html' as m with context %}
+{% block title %}Propiedades en Arequipa{% endblock %}
+{% block contenido %}
+<div class="grid gap-6 lg:grid-cols-4">
+  <aside class="lg:col-span-1">
+    <form method="get" class="card space-y-3 lg:sticky lg:top-4">
+      <h2 class="font-semibold text-slate-900">Filtrar</h2>
+      {{ m.campo('q', 'Buscar', filtros.get('q',''), extra='placeholder="Calle, zona o palabra clave"') }}
+      {{ m.selector('tipo', 'Tipo', TIPOS, filtros.get('tipo',''), 'Todos') }}
+      {{ m.selector('distrito', 'Distrito', DISTRITOS, filtros.get('distrito',''), 'Todos') }}
+      <div class="grid grid-cols-2 gap-2">
+        {{ m.campo('precio_min', 'Precio mín. (S/)', filtros.get('precio_min',''), 'number', extra='min="0" step="1000"') }}
+        {{ m.campo('precio_max', 'Precio máx. (S/)', filtros.get('precio_max',''), 'number', extra='min="0" step="1000"') }}
+        {{ m.campo('area_min', 'Área mín. (m²)', filtros.get('area_min',''), 'number', extra='min="0"') }}
+        {{ m.campo('area_max', 'Área máx. (m²)', filtros.get('area_max',''), 'number', extra='min="0"') }}
+        {{ m.campo('habitaciones', 'Habitaciones (mín.)', filtros.get('habitaciones',''), 'number', extra='min="0"') }}
+        {{ m.campo('banos', 'Baños (mín.)', filtros.get('banos',''), 'number', extra='min="0"') }}
+        {{ m.campo('antiguedad_max', 'Antigüedad máx.', filtros.get('antiguedad_max',''), 'number', extra='min="0"') }}
+        {{ m.campo('cochera', 'Cocheras (mín.)', filtros.get('cochera',''), 'number', extra='min="0"') }}
+      </div>
+      {{ m.selector('estado_conservacion', 'Conservación', ESTADOS, filtros.get('estado_conservacion',''), 'Cualquiera') }}
+      <div class="grid grid-cols-2 gap-2">
+        {{ m.casilla('jardin', 'Jardín', filtros.get('jardin')) }}
+        {{ m.casilla('piscina', 'Piscina', filtros.get('piscina')) }}
+        {{ m.casilla('ascensor', 'Ascensor', filtros.get('ascensor')) }}
+        {{ m.casilla('seguridad', 'Seguridad', filtros.get('seguridad')) }}
+      </div>
+      <div>
+        <label class="label" for="orden">Ordenar por</label>
+        <select class="input" id="orden" name="orden">{% for k, etq in ordenes.items() %}<option value="{{ k }}" {{ 'selected' if k == orden }}>{{ etq }}</option>{% endfor %}</select>
+      </div>
+      <div class="flex gap-2"><button class="btn btn-primary flex-1">Aplicar</button><a class="btn btn-outline" href="{{ url_for('propiedades.catalogo') }}">Limpiar</a></div>
+    </form>
+  </aside>
+  <section class="lg:col-span-3">
+    <div class="mb-4 flex flex-wrap items-center justify-between gap-2">
+      <h1 class="text-2xl font-bold text-slate-900">Propiedades en Arequipa</h1>
+      <p class="text-sm text-slate-500">{{ pag.total }} resultado{{ '' if pag.total == 1 else 's' }}</p>
+    </div>
+    {% if pag.items %}
+      <div class="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">{% for p in pag.items %}{{ m.tarjeta(p, favoritos) }}{% endfor %}</div>
+      {{ m.paginacion(pag, 'propiedades.catalogo', filtros) }}
+    {% else %}
+      <div class="card py-12 text-center text-slate-500">No encontramos propiedades con esos filtros. <a class="text-blue-800 underline" href="{{ url_for('propiedades.catalogo') }}">Ver todas</a></div>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}

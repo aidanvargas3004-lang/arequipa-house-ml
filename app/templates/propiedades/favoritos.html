@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+{% import '_macros.html' as m with context %}
+{% block title %}Mis favoritos{% endblock %}
+{% block contenido %}
+<h1 class="mb-5 text-2xl font-bold text-slate-900">Mis favoritos</h1>
+{% if favs %}
+<div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+  {% for f in favs %}
+    <div class="space-y-2">
+      {{ m.tarjeta(f.propiedad) }}
+      {% if f.propiedad.estado != 'aprobada' %}<p class="text-xs text-amber-700">Esta vivienda ya no está disponible ({{ f.propiedad.estado }}).</p>{% endif %}
+      <form method="post" action="{{ url_for('propiedades.favorito', propiedad_id=f.propiedad_id) }}">{{ m.csrf() }}<input type="hidden" name="next" value="{{ url_for('propiedades.favoritos') }}"><button class="btn btn-outline btn-sm w-full text-red-600">Quitar de favoritos</button></form>
+    </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="card py-12 text-center text-slate-500"><p>Aún no guardaste viviendas.</p><a class="btn btn-primary mt-4" href="{{ url_for('propiedades.catalogo') }}">Explorar propiedades</a></div>
+{% endif %}
+{% endblock %}

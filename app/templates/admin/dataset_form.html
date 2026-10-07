@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+{% import '_macros.html' as m with context %}
+{% block title %}{{ 'Editar registro' if reg else 'Nuevo registro' }}{% endblock %}
+{% block contenido %}
+{% include 'admin/_nav.html' %}
+<h1 class="mb-5 text-2xl font-bold text-slate-900">{{ 'Editar registro #' ~ reg.id if reg else 'Nuevo registro del histórico' }}</h1>
+<form method="post" class="card space-y-6" novalidate>
+  {{ m.csrf() }}
+  {% include '_form_vivienda.html' %}
+  <div class="max-w-xs border-t border-slate-100 pt-4">
+    {{ m.campo('precio', 'Precio de venta real (S/)', precio, 'number', 'Precio de cierre o de mercado en soles.', 'required min="20000" max="20000000" step="500"') }}
+  </div>
+  <div class="flex justify-end gap-3">
+    <a class="btn btn-outline" href="{{ url_for('admin.dataset') }}">Cancelar</a>
+    <button class="btn btn-primary" data-once>Guardar</button>
+  </div>
+</form>
+{% endblock %}

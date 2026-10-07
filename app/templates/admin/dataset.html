@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+{% import '_macros.html' as m with context %}
+{% block title %}Dataset de viviendas{% endblock %}
+{% block contenido %}
+{% include 'admin/_nav.html' %}
+<div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+  <div><h1 class="text-2xl font-bold text-slate-900">Dataset histórico de viviendas</h1><p class="text-sm text-slate-500">Insumo de entrenamiento del modelo. Los cambios se reflejan al reentrenar en «Modelos ML».</p></div>
+  <div class="flex flex-wrap gap-2">
+    <a class="btn btn-outline btn-sm" href="{{ url_for('admin.dataset_plantilla') }}">Descargar plantilla CSV</a>
+    <a class="btn btn-outline btn-sm" href="{{ url_for('admin.dataset_exportar', **filtros) }}">Exportar CSV</a>
+    <a class="btn btn-primary btn-sm" href="{{ url_for('admin.dataset_form') }}">+ Agregar registro</a>
+  </div>
+</div>
+
+<div class="mb-5 grid gap-4 lg:grid-cols-3">
+  <div class="card lg:col-span-1">
+    <h2 class="mb-2 font-semibold text-slate-900">Composición</h2>
+    {% for origen, n in comp.items() %}
+      <div class="flex items-center justify-between border-b border-slate-100 py-1.5 text-sm last:border-0">
+        <span class="text-slate-600">{{ origen_etiqueta.get(origen, origen) }}</span><span class="font-semibold">{{ '{:,}'.format(n) }}</span>
+      </div>
+      {% if origen in ('sintetico','csv','manual','venta') %}
+      <form method="post" action="{{ url_for('admin.dataset_eliminar_origen') }}" class="text-right" data-confirm="¿Eliminar TODOS los registros de origen «{{ origen_etiqueta.get(origen, origen) }}»? No se puede deshacer.">
+        {{ m.csrf() }}<input type="hidden" name="origen" value="{{ origen }}"><input type="hidden" name="confirmar" value="si"><button class="text-xs text-red-600 hover:underline">Eliminar este grupo</button>
+      </form>
+      {% endif %}
+    {% else %}<p class="text-sm text-slate-500">El dataset está vacío.</p>{% endfor %}
+  </div>
+  <form method="post" action="{{ url_for('admin.dataset_importar') }}" enctype="multipart/form-data" class="card space-y-3 lg:col-span-2">
+    {{ m.csrf() }}
+    <h2 class="font-semibold text-slate-900">Importar datos reales (CSV)</h2>
+    <p class="text-xs text-slate-500">Columnas obligatorias: <code>tipo, distrito, area_construida, habitaciones, banos, antiguedad, precio</code>. Opcionales: <code>area_terreno, pisos, estado_conservacion, acabados, cochera, jardin, piscina, ascensor, seguridad, cerca_colegios, cerca_hospitales, cerca_comercial, transporte_publico</code>. Precio en soles. Máx. 5 MB / 20 000 filas.</p>
+    <input class="input" type="file" name="archivo" accept=".csv,text/csv" required>
+    <label class="flex items-start gap-2 text-sm text-slate-600"><input type="checkbox" name="reemplazar" value="1" class="mt-0.5"> Reemplazar los datos sintéticos por estos datos reales (solo si el archivo trae al menos {{ config.ML_MIN_ROWS }} registros válidos).</label>
+    <button class="btn btn-primary" data-once>Importar</button>
+  </form>
+</div>
+
+<form method="get" class="mb-4 flex flex-wrap items-end gap-2">
+  {{ m.selector('origen', 'Origen', origen_etiqueta.keys()|list, filtros.get('origen',''), 'Todos') }}
+  {{ m.selector('tipo', 'Tipo', TIPOS, filtros.get('tipo',''), 'Todos') }}
+  {{ m.selector('distrito', 'Distrito', DISTRITOS, filtros.get('distrito',''), 'Todos') }}
+  <button class="btn btn-primary">Filtrar</button><a class="btn btn-outline" href="{{ url_for('admin.dataset') }}">Limpiar</a>
+  <span class="ml-auto text-sm text-slate-500">{{ '{:,}'.format(pag.total) }} registros</span>
+</form>
+
+<div class="card overflow-x-auto !p-0">
+  <table class="min-w-full divide-y divide-slate-200 text-sm">
+    <thead class="bg-slate-50"><tr><th class="th">ID</th><th class="th">Tipo</th><th class="th">Distrito</th><th class="th">Área</th><th class="th">Hab/Baños</th><th class="th">Antig.</th><th class="th">Estado</th><th class="th">Acabados</th><th class="th">Precio</th><th class="th">S/ m²</th><th class="th">Origen</th><th class="th"></th></tr></thead>
+    <tbody class="divide-y divide-slate-100">
+    {% for r in pag.items %}
+      <tr>
+        <td class="td">{{ r.id }}</td><td class="td">{{ r.tipo }}</td><td class="td">{{ r.distrito }}</td><td class="td whitespace-nowrap">{{ r.area_construida|m2 }}</td>
+        <td class="td">{{ r.habitaciones }}/{{ r.banos }}</td><td class="td">{{ r.antiguedad }}</td><td class="td">{{ r.estado_conservacion }}</td><td class="td">{{ r.acabados }}</td>
+        <td class="td font-semibold text-blue-900">{{ r.precio|soles }}</td><td class="td">{{ r.precio_m2|soles }}</td>
+        <td class="td"><span class="badge bg-slate-100 text-slate-700">{{ r.origen }}</span></td>
+        <td class="td whitespace-nowrap text-right">
+          <a class="btn btn-outline btn-sm" href="{{ url_for('admin.dataset_form', registro_id=r.id) }}">Editar</a>
+          <form class="inline" method="post" action="{{ url_for('admin.dataset_eliminar', registro_id=r.id) }}" data-confirm="¿Eliminar este registro?">{{ m.csrf() }}<button class="btn btn-outline btn-sm text-red-600">✕</button></form>
+        </td>
+      </tr>
+    {% else %}<tr><td colspan="12" class="td py-8 text-center text-slate-500">Sin registros.</td></tr>{% endfor %}
+    </tbody>
+  </table>
+</div>
+{{ m.paginacion(pag, 'admin.dataset', filtros) }}
+{% endblock %}

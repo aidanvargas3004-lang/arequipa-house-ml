@@ -1,0 +1,13 @@
+{
+  "name": "arequipa-house-ml-frontend",
+  "private": true,
+  "description": "Solo para recompilar el CSS (Tailwind). El CSS compilado ya está versionado en app/static/css.",
+  "scripts": {
+    "build:css": "tailwindcss -i app/static/css/input.css -o app/static/css/tailwind.css --minify",
+    "watch:css": "tailwindcss -i app/static/css/input.css -o app/static/css/tailwind.css --watch"
+  },
+  "devDependencies": {
+    "chart.js": "^4.4.4",
+    "tailwindcss": "^3.4.17"
+  }
+}

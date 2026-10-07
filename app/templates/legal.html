@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+{% block title %}{{ 'Política de privacidad' if pagina == 'privacidad' else 'Términos de uso' }}{% endblock %}
+{% block contenido %}
+<article class="card mx-auto max-w-3xl space-y-4 text-sm leading-relaxed text-slate-700">
+{% if pagina == 'privacidad' %}
+  <h1 class="text-2xl font-bold text-slate-900">Política de privacidad</h1>
+  <p>Arequipa House trata tus datos personales conforme a la Ley N.º 29733, Ley de Protección de Datos Personales del Perú, y su reglamento.</p>
+  <h2 class="font-semibold text-slate-900">Datos que recopilamos</h2>
+  <p>Nombre, correo electrónico, teléfono (opcional), las características de las viviendas que tasas o publicas, tus mensajes con otros usuarios y tus solicitudes de visita.</p>
+  <h2 class="font-semibold text-slate-900">Finalidad</h2>
+  <p>Gestionar tu cuenta, mostrar tus publicaciones, permitir el contacto entre compradores y vendedores, guardar tu historial de tasaciones y mejorar el modelo de estimación. Los datos de ventas cerradas que decidas aportar se usan de forma anónima para reentrenar el modelo.</p>
+  <h2 class="font-semibold text-slate-900">Seguridad y derechos</h2>
+  <p>Las contraseñas se almacenan cifradas (hash). Puedes acceder, rectificar o solicitar la eliminación de tus datos escribiendo al administrador de la plataforma.</p>
+{% else %}
+  <h1 class="text-2xl font-bold text-slate-900">Términos de uso</h1>
+  <p><strong>Carácter referencial.</strong> El precio estimado por la plataforma es una referencia generada por un modelo estadístico. <strong>No reemplaza la tasación oficial o profesional</strong> exigida para trámites legales, crediticios o notariales.</p>
+  <p><strong>Publicaciones.</strong> Cada publicación es revisada por un administrador antes de ser visible. El vendedor es responsable de la veracidad de los datos y fotografías. Se pueden rechazar o eliminar anuncios fraudulentos, duplicados o que incumplan estas normas.</p>
+  <p><strong>Comunicación.</strong> El contacto entre usuarios debe ser respetuoso. La plataforma no interviene en la negociación ni en el cierre de la operación.</p>
+  <p><strong>Alcance.</strong> Se estiman precios de venta de casas, departamentos y dúplex en la provincia de Arequipa. No se estiman alquileres ni terrenos.</p>
+{% endif %}
+</article>
+{% endblock %}

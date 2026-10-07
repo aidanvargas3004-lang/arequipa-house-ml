@@ -1,0 +1,97 @@
+{% extends 'base.html' %}
+{% import '_macros.html' as m with context %}
+{% set es_admin = admin is defined and admin %}
+{% block title %}{{ 'Editar publicación' if p else 'Publicar vivienda' }}{% endblock %}
+{% block contenido %}
+{% set accion = url_for('admin.publicacion_editar', propiedad_id=p.id) if es_admin else (url_for('vendedor.editar', propiedad_id=p.id) if p else url_for('vendedor.publicar')) %}
+<h1 class="mb-1 text-2xl font-bold text-slate-900">{{ 'Editar publicación' if p else 'Publicar vivienda' }}</h1>
+<p class="mb-5 text-sm text-slate-500">{% if es_admin %}Edición como administrador: no cambia el estado de la publicación.{% else %}Tu publicación será revisada por un administrador antes de ser visible.{% endif %}</p>
+
+{% if p and not es_admin and p.fotos %}
+<div class="card mb-5">
+  <h2 class="mb-3 font-semibold text-slate-900">Fotos actuales ({{ p.fotos|length }})</h2>
+  <div class="flex flex-wrap gap-3">
+    {% for f in p.fotos %}
+      <div class="relative">
+        <img src="{{ url_for('main.media', nombre=f.archivo) }}" alt="Foto {{ loop.index }}" class="h-24 w-36 rounded-lg object-cover">
+        <form method="post" action="{{ url_for('vendedor.eliminar_foto', foto_id=f.id) }}" data-confirm="¿Eliminar esta foto?" class="absolute right-1 top-1">{{ m.csrf() }}<button class="rounded-full bg-red-600 px-2 text-xs font-bold text-white" aria-label="Eliminar foto">✕</button></form>
+      </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+<form method="post" action="{{ accion }}" enctype="multipart/form-data" class="space-y-6" novalidate id="form-publicacion">
+  {{ m.csrf() }}
+  <div class="card space-y-4">
+    <h2 class="font-semibold text-slate-900">Datos del anuncio</h2>
+    {{ m.campo('titulo', 'Título', x.titulo, extra='required minlength="5" maxlength="160" placeholder="Ej.: Departamento moderno en Cayma"') }}
+    {{ m.campo('direccion', 'Dirección o referencia', x.direccion, extra='required maxlength="200"') }}
+    <div>
+      <label class="label" for="descripcion">Descripción</label>
+      <textarea class="input" id="descripcion" name="descripcion" rows="5" required minlength="20" maxlength="3000">{{ x.descripcion }}</textarea>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2 class="mb-4 font-semibold text-slate-900">Características de la vivienda</h2>
+    {% include '_form_vivienda.html' %}
+  </div>
+
+  <div class="card space-y-4">
+    <h2 class="font-semibold text-slate-900">Precio</h2>
+    <div class="grid gap-4 md:grid-cols-2">
+      {{ m.campo('precio', 'Precio de venta (S/)', x.precio, 'number', extra='required min="20000" max="20000000" step="500"') }}
+      <div class="rounded-lg border border-blue-100 bg-blue-50 p-3 text-sm">
+        <p class="font-medium text-blue-900">¿No sabes cuánto pedir?</p>
+        <p class="text-xs text-blue-800">El modelo de Machine Learning sugiere un precio según las características de arriba.</p>
+        <button type="button" id="btn-sugerir" class="btn btn-primary btn-sm mt-2">Calcular precio sugerido</button>
+        <div id="sugerencia" class="mt-2 hidden text-sm"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card space-y-3">
+    <h2 class="font-semibold text-slate-900">Fotografías {% if not p %}<span class="text-sm font-normal text-red-600">(obligatoria al menos una)</span>{% endif %}</h2>
+    <input class="input" type="file" name="fotos" accept="image/jpeg,image/png,image/webp" multiple {{ 'required' if not p }}>
+    <p class="text-xs text-slate-500">JPG, PNG o WEBP · máx. 6 MB por foto · hasta 8 fotos en total. La primera será la portada.</p>
+  </div>
+
+  <div class="flex justify-end gap-3">
+    <a class="btn btn-outline" href="{{ url_for('admin.publicaciones', estado='todas') if es_admin else url_for('vendedor.mis_publicaciones') }}">Cancelar</a>
+    <button class="btn btn-primary" data-once>{{ 'Guardar cambios' if p else 'Enviar a revisión' }}</button>
+  </div>
+</form>
+{% endblock %}
+{% block scripts %}
+<script>
+(function () {
+  var form = document.getElementById('form-publicacion');
+  var btn = document.getElementById('btn-sugerir');
+  var out = document.getElementById('sugerencia');
+  if (!form || !btn) return;
+  btn.addEventListener('click', function () {
+    var fd = new FormData(form);
+    fd.delete('fotos');
+    btn.disabled = true; btn.textContent = 'Calculando…';
+    fetch("{{ url_for('tasacion.api_tasar') }}", { method: 'POST', body: fd, headers: { 'X-CSRFToken': window.CSRF_TOKEN } })
+      .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
+      .then(function (res) {
+        out.classList.remove('hidden');
+        if (!res.ok || !res.j.ok) {
+          out.innerHTML = '<p class="text-red-700"></p>';
+          out.firstChild.textContent = (res.j.errores || ['No se pudo calcular.']).join(' ');
+          return;
+        }
+        var j = res.j;
+        out.innerHTML = '<p class="text-lg font-bold text-blue-900"></p><p class="text-xs text-slate-600"></p><button type="button" class="btn btn-accent btn-sm mt-2">Usar este precio</button>';
+        out.children[0].textContent = formatSoles(j.precio);
+        out.children[1].textContent = 'Rango ' + formatSoles(j.precio_min) + ' – ' + formatSoles(j.precio_max) + ' · ' + j.modelo;
+        out.children[2].addEventListener('click', function () { document.getElementById('precio').value = j.precio; });
+      })
+      .catch(function () { out.classList.remove('hidden'); out.textContent = 'No se pudo conectar con el servidor.'; })
+      .finally(function () { btn.disabled = false; btn.textContent = 'Calcular precio sugerido'; });
+  });
+})();
+</script>
+{% endblock %}

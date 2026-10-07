@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+{% import '_macros.html' as m with context %}
+{% block title %}Iniciar sesión{% endblock %}
+{% block contenido %}
+<div class="mx-auto max-w-md">
+  <div class="card">
+    <h1 class="text-2xl font-bold text-slate-900">Iniciar sesión</h1>
+    <p class="mt-1 text-sm text-slate-500">Accede para tasar, publicar o gestionar la plataforma.</p>
+    <form method="post" class="mt-5 space-y-4">
+      {{ m.csrf() }}
+      <input type="hidden" name="next" value="{{ request.args.get('next', '') }}">
+      {{ m.campo('email', 'Correo electrónico', email, 'email', extra='required autocomplete="username" autofocus') }}
+      {{ m.campo('password', 'Contraseña', '', 'password', extra='required autocomplete="current-password"') }}
+      <label class="flex items-center gap-2 text-sm text-slate-600"><input type="checkbox" name="recordar" class="rounded border-slate-300"> Mantener sesión iniciada</label>
+      <button class="btn btn-primary w-full" data-once>Entrar</button>
+    </form>
+    <p class="mt-4 text-center text-sm text-slate-600">¿No tienes cuenta? <a class="font-semibold text-blue-800 hover:underline" href="{{ url_for('auth.registro') }}">Regístrate</a></p>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+{% import '_macros.html' as m with context %}
+{% block title %}Panel de administración{% endblock %}
+{% block head %}<script src="{{ url_for('static', filename='js/vendor/chart.umd.min.js') }}"></script>{% endblock %}
+{% block contenido %}
+{% include 'admin/_nav.html' %}
+<h1 class="mb-5 text-2xl font-bold text-slate-900">Panel de administración</h1>
+
+<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+  {% for valor, etq, enlace in [(stats.usuarios, 'Usuarios registrados', url_for('admin.usuarios')), (stats.propiedades, 'Publicaciones', url_for('admin.publicaciones', estado='todas')), (stats.tasaciones, 'Tasaciones realizadas', url_for('admin.tasaciones')), (stats.por_estado.get('pendiente', 0), 'Pendientes de moderar', url_for('admin.publicaciones'))] %}
+  <a href="{{ enlace }}" class="card transition hover:shadow-md"><p class="text-3xl font-extrabold text-blue-900">{{ valor }}</p><p class="text-sm text-slate-500">{{ etq }}</p></a>
+  {% endfor %}
+</div>
+<div class="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+  <div class="card"><p class="text-3xl font-extrabold text-slate-800">{{ stats.visitas_pendientes }}</p><p class="text-sm text-slate-500">Visitas pendientes</p></div>
+  <div class="card"><p class="text-3xl font-extrabold text-slate-800">{{ stats.mensajes }}</p><p class="text-sm text-slate-500">Mensajes intercambiados</p></div>
+  <div class="card"><p class="text-3xl font-extrabold text-slate-800">{{ stats.dataset.values()|sum|num }}</p><p class="text-sm text-slate-500">Registros del dataset</p></div>
+  <a href="{{ url_for('admin.modelos') }}" class="card transition hover:shadow-md">
+    {% if modelo %}<p class="text-lg font-extrabold text-slate-800">v{{ modelo.version }} · {{ modelo.algoritmo_nombre }}</p><p class="text-sm text-slate-500">Modelo activo · R² {{ modelo.metricas_ganador.r2 }}</p>
+    {% else %}<p class="text-lg font-bold text-red-700">Sin modelo activo</p>{% endif %}
+  </a>
+</div>
+
+{% if modelo and modelo.origen_datos == 'sintetico' %}
+<div class="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+  El modelo activo se entrenó solo con <strong>datos sintéticos de demostración</strong>. Cuando tengas el histórico real de Arequipa House, súbelo en <a class="underline" href="{{ url_for('admin.dataset') }}">Dataset</a> y reentrena en <a class="underline" href="{{ url_for('admin.modelos') }}">Modelos ML</a>.
+</div>
+{% endif %}
+
+<div class="mt-6 grid gap-6 lg:grid-cols-3">
+  <div class="card lg:col-span-2"><h2 class="mb-2 font-semibold text-slate-900">Tasaciones por día (últimos 30 días)</h2><div class="h-64"><canvas id="g-tasaciones"></canvas></div></div>
+  <div class="card"><h2 class="mb-2 font-semibold text-slate-900">Publicaciones por estado</h2><div class="h-64"><canvas id="g-estados"></canvas></div></div>
+  <div class="card lg:col-span-2"><h2 class="mb-2 font-semibold text-slate-900">Precio promedio por m² construido según el dataset (S/)</h2><div class="h-[28rem]"><canvas id="g-m2"></canvas></div></div>
+  <div class="card"><h2 class="mb-2 font-semibold text-slate-900">Origen de los datos</h2><div class="h-64"><canvas id="g-origen"></canvas></div></div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+(function () {
+  if (!window.Chart) { return; }
+  var azul = '#1e40af', ambar = '#f59e0b', verde = '#10b981', rojo = '#ef4444', gris = '#94a3b8';
+  Chart.defaults.font.family = 'ui-sans-serif, system-ui, sans-serif';
+  var serie = {{ serie|tojson }};
+  new Chart(document.getElementById('g-tasaciones'), { type: 'bar',
+    data: { labels: serie.map(function (s) { return s.dia; }), datasets: [{ label: 'Tasaciones', data: serie.map(function (s) { return s.n; }), backgroundColor: azul, borderRadius: 4 }] },
+    options: { maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } } });
+  var est = {{ stats.por_estado|tojson }};
+  var colores = { pendiente: ambar, aprobada: verde, rechazada: rojo, vendida: gris };
+  new Chart(document.getElementById('g-estados'), { type: 'doughnut',
+    data: { labels: Object.keys(est), datasets: [{ data: Object.values(est), backgroundColor: Object.keys(est).map(function (k) { return colores[k] || azul; }) }] },
+    options: { maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } } });
+  var m2 = {{ m2|tojson }};
+  new Chart(document.getElementById('g-m2'), { type: 'bar',
+    data: { labels: m2.map(function (r) { return r[0]; }), datasets: [{ label: 'S/ por m²', data: m2.map(function (r) { return r[1]; }), backgroundColor: azul, borderRadius: 4 }] },
+    options: { indexAxis: 'y', maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { ticks: { autoSkip: false } } } } });
+  var etqs = {{ origen_etiqueta|tojson }};
+  var comp = {{ stats.dataset|tojson }};
+  new Chart(document.getElementById('g-origen'), { type: 'doughnut',
+    data: { labels: Object.keys(comp).map(function (k) { return etqs[k] || k; }), datasets: [{ data: Object.values(comp), backgroundColor: [gris, azul, ambar, verde] }] },
+    options: { maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } } });
+})();
+</script>
+{% endblock %}

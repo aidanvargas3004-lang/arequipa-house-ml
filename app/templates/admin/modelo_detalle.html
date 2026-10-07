@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% import '_macros.html' as m with context %}
+{% block title %}Modelo v{{ mod.version }}{% endblock %}
+{% block contenido %}
+{% include 'admin/_nav.html' %}
+{% set mt = mod.metricas %}
+<a class="text-sm text-blue-800 hover:underline" href="{{ url_for('admin.modelos') }}">← Modelos</a>
+<h1 class="mb-1 mt-2 text-2xl font-bold text-slate-900">Modelo v{{ mod.version }} · {{ mod.algoritmo_nombre }} {% if mod.activo %}<span class="badge bg-emerald-600 text-white">Activo</span>{% endif %}</h1>
+<p class="mb-5 text-sm text-slate-500">Entrenado el {{ mod.terminado_en|fecha }} con {{ '{:,}'.format(mt.n_total) }} registros (entrenamiento {{ mt.n_entrenamiento }} · validación {{ mt.n_validacion }} · prueba {{ mt.n_prueba }}).</p>
+
+<div class="grid gap-6 lg:grid-cols-2">
+  <div class="card">
+    <h2 class="mb-3 font-semibold text-slate-900">Comparación de algoritmos</h2>
+    <div class="overflow-x-auto">
+    <table class="min-w-full text-sm">
+      <thead><tr><th class="th">Algoritmo</th><th class="th">Conjunto</th><th class="th">MAE</th><th class="th">RMSE</th><th class="th">R²</th><th class="th">Error medio %</th></tr></thead>
+      <tbody class="divide-y divide-slate-100">
+      {% for algo, res in mt.algoritmos.items() %}
+        {% for conj, etq in [('validacion','Validación'),('prueba','Prueba')] %}
+        <tr class="{{ 'bg-emerald-50' if algo == mt.ganador }}">
+          {% if loop.first %}<td class="td font-semibold" rowspan="2">{{ 'Random Forest' if algo == 'random_forest' else 'Gradient Boosting' }}{% if algo == mt.ganador %}<br><span class="badge bg-emerald-600 text-white">Seleccionado</span>{% endif %}</td>{% endif %}
+          <td class="td">{{ etq }}</td><td class="td">{{ res[conj].mae|soles }}</td><td class="td">{{ res[conj].rmse|soles }}</td><td class="td">{{ res[conj].r2 }}</td><td class="td">{{ res[conj].mape }} %</td>
+        </tr>
+        {% endfor %}
+      {% endfor %}
+      </tbody>
+    </table>
+    </div>
+    <p class="mt-3 text-xs text-slate-500">La selección se hace por menor RMSE en validación; la prueba mide el desempeño final sobre datos no vistos. MAE = error absoluto medio; RMSE = raíz del error cuadrático medio; R² = proporción de la variación del precio explicada.</p>
+    {% if mod.origen_datos == 'sintetico' %}<p class="mt-3 rounded-lg bg-amber-50 p-3 text-xs text-amber-900">Estas métricas provienen de <strong>datos sintéticos</strong>: validan el pipeline, no la precisión sobre el mercado real.</p>{% endif %}
+  </div>
+  <div class="card">
+    <h2 class="mb-3 font-semibold text-slate-900">Variables más influyentes</h2>
+    {% for f in mt.importancias[:10] %}
+      <div class="mb-2"><div class="flex justify-between text-sm"><span>{{ f.etiqueta }}</span><span class="font-semibold">{{ f.peso }} %</span></div>
+      <div class="h-2 rounded-full bg-slate-100"><div class="h-2 rounded-full bg-blue-700" style="width: {{ [f.peso, 1]|max }}%"></div></div></div>
+    {% endfor %}
+    <p class="mt-2 text-xs text-slate-500">Importancia por permutación sobre el conjunto de validación.</p>
+  </div>
+  <div class="card lg:col-span-2">
+    <h2 class="mb-2 font-semibold text-slate-900">Datos de entrenamiento por origen</h2>
+    <div class="flex flex-wrap gap-3 text-sm">{% for o, n in (mod.composicion or {}).items() %}<span class="rounded-lg bg-slate-100 px-3 py-2">{{ origen_etiqueta.get(o, o) }}: <strong>{{ '{:,}'.format(n) }}</strong></span>{% endfor %}</div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% import '_macros.html' as m with context %}
+{% block title %}Tasación con Machine Learning{% endblock %}
+{% block contenido %}
+<div class="grid gap-6 lg:grid-cols-3">
+  <div class="lg:col-span-2">
+    <h1 class="text-2xl font-bold text-slate-900">Tasación con Machine Learning</h1>
+    <p class="mt-1 text-sm text-slate-600">Ingresa las características de la vivienda para obtener un precio de venta referencial en Arequipa.</p>
+    <form method="post" class="card mt-5" novalidate>
+      {{ m.csrf() }}
+      {% include '_form_vivienda.html' %}
+      <div class="mt-6 flex items-center justify-between gap-3 border-t border-slate-100 pt-4">
+        <p class="text-xs text-slate-500">La estimación se guarda en tu historial.</p>
+        <button class="btn btn-primary" data-once>Calcular precio estimado</button>
+      </div>
+    </form>
+  </div>
+  <aside class="space-y-4">
+    <div class="card">
+      <h2 class="font-semibold text-slate-900">¿Cómo se calcula?</h2>
+      <p class="mt-2 text-sm text-slate-600">Un modelo de Machine Learning (Random Forest o Gradient Boosting, el que obtenga menor error) aprende de viviendas con precio conocido y estima el valor de la tuya.</p>
+      <p class="mt-2 text-sm text-slate-600">Además de la cifra verás un <strong>rango</strong> y los <strong>factores</strong> que más pesaron.</p>
+    </div>
+    <div class="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+      <strong>Importante:</strong> es una referencia. No reemplaza la tasación oficial para trámites legales, bancarios o notariales.
+    </div>
+  </aside>
+</div>
+{% endblock %}

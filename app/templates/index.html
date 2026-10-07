@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+{% import '_macros.html' as m with context %}
+{% block title %}Inicio{% endblock %}
+{% block contenido %}
+<section class="overflow-hidden rounded-2xl bg-gradient-to-br from-blue-900 via-blue-800 to-blue-700 px-6 py-10 text-white shadow-lg md:px-12">
+  <div class="grid items-center gap-8 lg:grid-cols-2">
+    <div>
+      <p class="mb-2 inline-block rounded-full bg-amber-400 px-3 py-1 text-xs font-bold uppercase tracking-wide text-slate-900">Machine Learning · Arequipa</p>
+      <h1 class="text-3xl font-extrabold leading-tight md:text-4xl">Valoración inteligente de inmuebles en Arequipa</h1>
+      <p class="mt-3 max-w-xl text-blue-100">Estima el precio de una casa o departamento en segundos con un modelo entrenado con datos del mercado local, y encuentra viviendas publicadas por sus propietarios.</p>
+      <div class="mt-5 flex flex-wrap gap-3">
+        <a href="{{ url_for('propiedades.catalogo') }}" class="btn btn-accent">Ver {{ total }} propiedades</a>
+        {% if not current_user.is_authenticated %}<a href="{{ url_for('auth.registro') }}" class="btn border border-white/40 text-white hover:bg-white/10">Crear cuenta gratis</a>{% endif %}
+      </div>
+    </div>
+    <form method="get" action="{{ url_for('tasacion.tasar') }}" class="rounded-xl bg-white p-5 text-slate-800 shadow-xl">
+      <h2 class="mb-3 text-lg font-bold text-blue-900">Tasación rápida</h2>
+      <div class="grid gap-3 sm:grid-cols-2">
+        {{ m.selector('tipo', 'Tipo', TIPOS, 'Departamento') }}
+        {{ m.selector('distrito', 'Distrito', DISTRITOS, 'Cayma') }}
+        {{ m.campo('area_construida', 'Área (m²)', 120, 'number', extra='min="15" max="3000" step="0.1"') }}
+        {{ m.campo('habitaciones', 'Habitaciones', 3, 'number', extra='min="1" max="15"') }}
+      </div>
+      <button class="btn btn-primary mt-4 w-full">Calcular precio estimado</button>
+      <p class="mt-2 text-center text-xs text-slate-500">Completarás el resto de detalles en el siguiente paso.</p>
+    </form>
+  </div>
+</section>
+
+<section class="mt-10 grid gap-4 md:grid-cols-3">
+  {% for n, t, d in [
+    ('1', 'Describe la vivienda', 'Distrito, área, habitaciones, antigüedad, acabados y comodidades.'),
+    ('2', 'El modelo estima el precio', 'Random Forest y Gradient Boosting comparados; se usa el más preciso.'),
+    ('3', 'Entiende el resultado', 'Rango de precio, precio por m² y qué factores lo suben o lo bajan.') ] %}
+  <div class="card">
+    <span class="flex h-9 w-9 items-center justify-center rounded-full bg-blue-900 font-bold text-white">{{ n }}</span>
+    <h3 class="mt-3 font-semibold text-slate-900">{{ t }}</h3>
+    <p class="mt-1 text-sm text-slate-600">{{ d }}</p>
+  </div>
+  {% endfor %}
+</section>
+
+<section class="mt-10">
+  <div class="mb-4 flex items-end justify-between">
+    <h2 class="text-xl font-bold text-slate-900">Propiedades recientes</h2>
+    <a href="{{ url_for('propiedades.catalogo') }}" class="text-sm font-semibold text-blue-800 hover:underline">Ver todas →</a>
+  </div>
+  {% if destacadas %}
+    <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">{% for p in destacadas %}{{ m.tarjeta(p) }}{% endfor %}</div>
+  {% else %}
+    <div class="card text-center text-slate-500">Aún no hay propiedades publicadas. ¡Sé el primero en publicar!</div>
+  {% endif %}
+</section>
+
+<section class="mt-10 grid gap-4 md:grid-cols-3">
+  <div class="card"><h3 class="font-semibold text-blue-900">Compradores</h3><p class="mt-1 text-sm text-slate-600">Busca con filtros, compara hasta 4 viviendas, guarda favoritos, contacta al dueño y agenda visitas.</p></div>
+  <div class="card"><h3 class="font-semibold text-blue-900">Vendedores</h3><p class="mt-1 text-sm text-slate-600">Tasa tu vivienda antes de ponerle precio, publica con fotos y responde a los interesados.</p></div>
+  <div class="card"><h3 class="font-semibold text-blue-900">Administración</h3><p class="mt-1 text-sm text-slate-600">Modera publicaciones, gestiona datos históricos, reentrena el modelo y ajusta parámetros de tasación.</p></div>
+</section>
+{% endblock %}

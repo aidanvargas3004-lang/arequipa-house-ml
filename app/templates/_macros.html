@@ -1,0 +1,82 @@
+{% macro csrf() %}<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">{% endmacro %}
+
+{% macro campo(nombre, etiqueta, valor='', tipo='text', ayuda='', extra='') %}
+<div>
+  <label class="label" for="{{ nombre }}">{{ etiqueta }}</label>
+  <input class="input" id="{{ nombre }}" name="{{ nombre }}" type="{{ tipo }}" value="{{ valor if valor is not none else '' }}" {{ extra|safe }}>
+  {% if ayuda %}<p class="mt-1 text-xs text-slate-500">{{ ayuda }}</p>{% endif %}
+</div>
+{% endmacro %}
+
+{% macro selector(nombre, etiqueta, opciones, valor='', vacio=None, extra='') %}
+<div>
+  <label class="label" for="{{ nombre }}">{{ etiqueta }}</label>
+  <select class="input" id="{{ nombre }}" name="{{ nombre }}" {{ extra|safe }}>
+    {% if vacio is not none %}<option value="">{{ vacio }}</option>{% endif %}
+    {% for o in opciones %}<option value="{{ o }}" {{ 'selected' if o|string == valor|string }}>{{ o }}</option>{% endfor %}
+  </select>
+</div>
+{% endmacro %}
+
+{% macro casilla(nombre, etiqueta, marcado) %}
+<label class="flex cursor-pointer items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 hover:border-blue-300">
+  <input type="checkbox" name="{{ nombre }}" value="1" class="h-4 w-4 rounded border-slate-300 text-blue-700 focus:ring-blue-600" {{ 'checked' if marcado }}>
+  {{ etiqueta }}
+</label>
+{% endmacro %}
+
+{% macro estado_badge(estado) %}
+{% set c = {'pendiente':'bg-amber-100 text-amber-800','aprobada':'bg-emerald-100 text-emerald-800','rechazada':'bg-red-100 text-red-800','vendida':'bg-slate-200 text-slate-700','confirmada':'bg-emerald-100 text-emerald-800','cancelada':'bg-slate-200 text-slate-600','entrenando':'bg-blue-100 text-blue-800','listo':'bg-emerald-100 text-emerald-800','error':'bg-red-100 text-red-800'}.get(estado,'bg-slate-100 text-slate-700') %}
+<span class="badge {{ c }}">{{ estado|capitalize }}</span>
+{% endmacro %}
+
+{% macro paginacion(pag, endpoint, args) %}
+{% if pag.pages > 1 %}
+<nav class="mt-6 flex flex-wrap items-center justify-center gap-1" aria-label="Paginación">
+  {% if pag.has_prev %}<a class="btn btn-outline btn-sm" href="{{ url_for(endpoint, pagina=pag.prev_num, **args) }}">← Anterior</a>{% endif %}
+  {% for n in pag.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+    {% if n %}
+      <a class="btn btn-sm {{ 'btn-primary' if n == pag.page else 'btn-outline' }}" href="{{ url_for(endpoint, pagina=n, **args) }}">{{ n }}</a>
+    {% else %}<span class="px-1 text-slate-400">…</span>{% endif %}
+  {% endfor %}
+  {% if pag.has_next %}<a class="btn btn-outline btn-sm" href="{{ url_for(endpoint, pagina=pag.next_num, **args) }}">Siguiente →</a>{% endif %}
+</nav>
+{% endif %}
+{% endmacro %}
+
+{% macro foto(p, clases='h-48 w-full object-cover') %}
+{% if p.foto_principal %}
+  <img src="{{ url_for('main.media', nombre=p.foto_principal.archivo) }}" alt="{{ p.titulo }}" class="{{ clases }}" loading="lazy">
+{% else %}
+  <div class="{{ clases }} flex items-center justify-center bg-gradient-to-br from-slate-200 to-slate-300 text-slate-400">
+    <svg viewBox="0 0 24 24" class="h-14 w-14" fill="currentColor"><path d="M12 3 2 12h3v8h5v-5h4v5h5v-8h3z"/></svg>
+  </div>
+{% endif %}
+{% endmacro %}
+
+{% macro tarjeta(p, favoritos=()) %}
+<article class="card flex flex-col overflow-hidden !p-0 transition hover:shadow-md">
+  <a href="{{ url_for('propiedades.detalle', propiedad_id=p.id) }}" class="relative block">
+    {{ foto(p) }}
+    <span class="badge absolute left-3 top-3 bg-blue-900/90 text-white">{{ p.tipo }}</span>
+    {% if p.id in favoritos %}<span class="badge absolute right-3 top-3 bg-amber-400 text-slate-900">★ Favorita</span>{% endif %}
+  </a>
+  <div class="flex flex-1 flex-col gap-2 p-4">
+    <p class="text-xl font-bold text-blue-900">{{ p.precio|soles }}</p>
+    <h3 class="font-semibold leading-snug text-slate-900"><a href="{{ url_for('propiedades.detalle', propiedad_id=p.id) }}" class="hover:underline">{{ p.titulo }}</a></h3>
+    <p class="text-sm text-slate-500">{{ p.distrito }}</p>
+    <ul class="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-sm text-slate-600">
+      <li>{{ p.area_construida|m2 }}</li><li>{{ p.habitaciones }} hab.</li><li>{{ p.banos }} baño{{ 's' if p.banos != 1 }}</li>
+      {% if p.cochera %}<li>{{ p.cochera }} coch.</li>{% endif %}
+    </ul>
+    <p class="text-xs text-slate-400">{{ (p.precio_m2)|soles }} / m² construido</p>
+    <div class="mt-auto flex gap-2 pt-2">
+      <a class="btn btn-primary btn-sm flex-1" href="{{ url_for('propiedades.detalle', propiedad_id=p.id) }}">Ver detalle</a>
+      <form method="post" action="{{ url_for('propiedades.comparar_agregar', propiedad_id=p.id) }}">{{ csrf() }}
+        <input type="hidden" name="next" value="{{ request.full_path.rstrip('?') }}">
+        <button class="btn btn-outline btn-sm" title="Agregar al comparador">⇄ Comparar</button>
+      </form>
+    </div>
+  </div>
+</article>
+{% endmacro %}

@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+{% import '_macros.html' as m with context %}
+{% block title %}Mi perfil{% endblock %}
+{% block contenido %}
+<h1 class="mb-5 text-2xl font-bold text-slate-900">Mi perfil</h1>
+<div class="grid gap-6 lg:grid-cols-2">
+  <form method="post" class="card space-y-4">
+    {{ m.csrf() }}<input type="hidden" name="accion" value="datos">
+    <h2 class="font-semibold text-slate-900">Datos personales</h2>
+    {{ m.campo('nombre', 'Nombre completo', current_user.nombre, extra='required maxlength="120"') }}
+    <div><span class="label">Correo</span><p class="rounded-lg bg-slate-100 px-3 py-2 text-sm text-slate-600">{{ current_user.email }}</p></div>
+    {{ m.campo('telefono', 'Teléfono', current_user.telefono or '', 'tel') }}
+    <p class="text-sm text-slate-500">Rol: <span class="badge bg-blue-100 text-blue-800">{{ current_user.rol }}</span> · Miembro desde {{ current_user.creado_en|fecha(False) }}</p>
+    <button class="btn btn-primary">Guardar cambios</button>
+  </form>
+  <form method="post" class="card space-y-4">
+    {{ m.csrf() }}<input type="hidden" name="accion" value="clave">
+    <h2 class="font-semibold text-slate-900">Cambiar contraseña</h2>
+    {{ m.campo('actual', 'Contraseña actual', '', 'password', extra='required autocomplete="current-password"') }}
+    {{ m.campo('nueva', 'Nueva contraseña', '', 'password', 'Mínimo 8 caracteres, con letras y números.', 'required minlength="8" autocomplete="new-password"') }}
+    {{ m.campo('nueva2', 'Repetir nueva contraseña', '', 'password', extra='required minlength="8" autocomplete="new-password"') }}
+    <button class="btn btn-primary">Actualizar contraseña</button>
+  </form>
+</div>
+{% endblock %}

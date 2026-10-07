@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+{% import '_macros.html' as m with context %}
+{% block title %}Moderación de publicaciones{% endblock %}
+{% block contenido %}
+{% include 'admin/_nav.html' %}
+<h1 class="mb-4 text-2xl font-bold text-slate-900">Moderación de publicaciones</h1>
+<div class="mb-5 flex flex-wrap gap-2">
+  {% for clave, etq in [('pendiente','Pendientes'),('aprobada','Aprobadas'),('rechazada','Rechazadas'),('vendida','Vendidas'),('todas','Todas')] %}
+    <a href="{{ url_for('admin.publicaciones', estado=clave) }}" class="btn btn-sm {{ 'btn-primary' if estado == clave else 'btn-outline' }}">{{ etq }}{% if clave != 'todas' %} ({{ cuenta.get(clave, 0) }}){% endif %}</a>
+  {% endfor %}
+</div>
+{% if pag.items %}
+<div class="space-y-3">
+  {% for p in pag.items %}
+  <article class="card flex flex-col gap-4 md:flex-row">
+    <a href="{{ url_for('propiedades.detalle', propiedad_id=p.id) }}" class="block w-full flex-none overflow-hidden rounded-lg md:w-52">{{ m.foto(p, 'h-36 w-full object-cover') }}</a>
+    <div class="flex-1">
+      <div class="flex flex-wrap items-center gap-2"><h2 class="font-semibold text-slate-900">{{ p.titulo }}</h2>{{ m.estado_badge(p.estado) }}</div>
+      <p class="text-sm text-slate-500">{{ p.tipo }} · {{ p.distrito }} · {{ p.area_construida|m2 }} · {{ p.habitaciones }} hab. · {{ p.banos }} baños · {{ p.fotos|length }} foto(s)</p>
+      <p class="text-sm text-slate-500">Vendedor: {{ p.vendedor.nombre }} ({{ p.vendedor.email }}) · enviada {{ p.creado_en|fecha }}</p>
+      <p class="mt-1 text-lg font-bold text-blue-900">{{ p.precio|soles }} <span class="text-sm font-normal text-slate-500">· {{ p.precio_m2|soles }}/m²</span></p>
+      {% if p.motivo_rechazo %}<p class="mt-1 text-sm text-red-700">Motivo del rechazo: {{ p.motivo_rechazo }}</p>{% endif %}
+    </div>
+    <div class="flex w-full flex-col gap-2 md:w-60">
+      <div class="flex gap-2">
+        <a class="btn btn-outline btn-sm flex-1" href="{{ url_for('propiedades.detalle', propiedad_id=p.id) }}">Ver</a>
+        <a class="btn btn-outline btn-sm flex-1" href="{{ url_for('admin.publicacion_editar', propiedad_id=p.id) }}">Editar</a>
+      </div>
+      {% if p.estado in ('pendiente','rechazada') %}
+      <form method="post" action="{{ url_for('admin.moderar', propiedad_id=p.id) }}">{{ m.csrf() }}<input type="hidden" name="accion" value="aprobar"><button class="btn btn-ok btn-sm w-full">Aprobar</button></form>
+      {% endif %}
+      {% if p.estado in ('pendiente','aprobada') %}
+      <details>
+        <summary class="btn btn-outline btn-sm w-full cursor-pointer list-none text-red-600">Rechazar…</summary>
+        <form method="post" action="{{ url_for('admin.moderar', propiedad_id=p.id) }}" class="mt-2 space-y-2">
+          {{ m.csrf() }}<input type="hidden" name="accion" value="rechazar">
+          <textarea name="motivo" rows="2" required minlength="5" maxlength="300" class="input" placeholder="Motivo para el vendedor"></textarea>
+          <button class="btn btn-danger btn-sm w-full">Confirmar rechazo</button>
+        </form>
+      </details>
+      {% endif %}
+      <form method="post" action="{{ url_for('admin.moderar', propiedad_id=p.id) }}" data-confirm="¿Eliminar definitivamente esta publicación?">{{ m.csrf() }}<input type="hidden" name="accion" value="eliminar"><button class="btn btn-outline btn-sm w-full text-red-600">Eliminar</button></form>
+    </div>
+  </article>
+  {% endfor %}
+</div>
+{{ m.paginacion(pag, 'admin.publicaciones', {'estado': estado}) }}
+{% else %}
+<div class="card py-12 text-center text-slate-500">No hay publicaciones en este estado.</div>
+{% endif %}
+{% endblock %}

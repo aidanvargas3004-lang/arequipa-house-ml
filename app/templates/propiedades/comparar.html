@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+{% import '_macros.html' as m with context %}
+{% block title %}Comparar viviendas{% endblock %}
+{% block contenido %}
+<div class="mb-5 flex flex-wrap items-center justify-between gap-3">
+  <div><h1 class="text-2xl font-bold text-slate-900">Comparar viviendas</h1><p class="text-sm text-slate-500">Hasta {{ maximo }} viviendas lado a lado.</p></div>
+  {% if filas %}<form method="post" action="{{ url_for('propiedades.comparar_vaciar') }}" data-confirm="¿Vaciar el comparador?">{{ m.csrf() }}<button class="btn btn-outline btn-sm">Vaciar</button></form>{% endif %}
+</div>
+{% if filas %}
+<div class="card overflow-x-auto !p-0">
+  <table class="min-w-full text-sm">
+    <thead>
+      <tr class="bg-slate-50">
+        <th class="th w-44"></th>
+        {% for f in filas %}
+        <th class="min-w-[14rem] p-3 text-left align-top">
+          <a href="{{ url_for('propiedades.detalle', propiedad_id=f.p.id) }}">{{ m.foto(f.p, 'h-28 w-full rounded-lg object-cover') }}</a>
+          <a class="mt-2 block font-semibold text-slate-900 hover:underline" href="{{ url_for('propiedades.detalle', propiedad_id=f.p.id) }}">{{ f.p.titulo }}</a>
+          <form method="post" action="{{ url_for('propiedades.comparar_quitar', propiedad_id=f.p.id) }}" class="mt-1">{{ m.csrf() }}<button class="text-xs font-normal text-red-600 hover:underline">Quitar</button></form>
+        </th>
+        {% endfor %}
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-slate-100">
+      {% macro fila(etq, clave) %}
+      <tr><th class="th">{{ etq }}</th>{% for f in filas %}<td class="td">{{ caller(f) }}</td>{% endfor %}</tr>
+      {% endmacro %}
+      {% call(f) fila('Precio publicado') %}<span class="text-lg font-bold text-blue-900">{{ f.p.precio|soles }}</span>{% endcall %}
+      {% call(f) fila('Precio por m²') %}<span class="{{ 'font-bold text-emerald-700' if f.p.precio_m2 == mejor_m2 }}">{{ f.p.precio_m2|soles }}</span>{% if f.p.precio_m2 == mejor_m2 and filas|length > 1 %} <span class="badge bg-emerald-100 text-emerald-800">Mejor</span>{% endif %}{% endcall %}
+      {% call(f) fila('Valor estimado (ML)') %}{{ f.est.precio|soles }}{% endcall %}
+      {% call(f) fila('Conclusión') %}<span class="badge {{ {'verde':'bg-emerald-100 text-emerald-800','rojo':'bg-red-100 text-red-800','azul':'bg-blue-100 text-blue-800'}[f.veredicto.clase] }}">{{ f.veredicto.etiqueta }}</span> <span class="text-xs text-slate-500">{{ '%+.1f'|format(f.veredicto.diferencia * 100) }} %</span>{% endcall %}
+      {% call(f) fila('Tipo') %}{{ f.p.tipo }}{% endcall %}
+      {% call(f) fila('Distrito') %}{{ f.p.distrito }}{% endcall %}
+      {% call(f) fila('Área construida') %}{{ f.p.area_construida|m2 }}{% endcall %}
+      {% call(f) fila('Terreno') %}{{ f.p.area_terreno|m2 }}{% endcall %}
+      {% call(f) fila('Habitaciones') %}{{ f.p.habitaciones }}{% endcall %}
+      {% call(f) fila('Baños') %}{{ f.p.banos }}{% endcall %}
+      {% call(f) fila('Cocheras') %}{{ f.p.cochera }}{% endcall %}
+      {% call(f) fila('Antigüedad') %}{{ f.p.antiguedad }} años{% endcall %}
+      {% call(f) fila('Conservación') %}{{ f.p.estado_conservacion }}{% endcall %}
+      {% call(f) fila('Acabados') %}{{ f.p.acabados }}{% endcall %}
+      {% call(f) fila('Extras') %}{% set ex = [] %}{% for c, e in [('jardin','Jardín'),('piscina','Piscina'),('ascensor','Ascensor'),('seguridad','Seguridad')] %}{% if f.p[c] %}{% set _ = ex.append(e) %}{% endif %}{% endfor %}{{ ex|join(', ') or '—' }}{% endcall %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="card py-12 text-center text-slate-500"><p>El comparador está vacío. Agrega viviendas desde el catálogo con el botón «Comparar».</p><a class="btn btn-primary mt-4" href="{{ url_for('propiedades.catalogo') }}">Ir al catálogo</a></div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,8 @@
+{% set secciones = [('admin.panel','Panel'),('admin.publicaciones','Moderación'),('admin.usuarios','Usuarios'),('admin.dataset','Dataset'),('admin.modelos','Modelos ML'),('admin.parametros','Parámetros'),('admin.tasaciones','Tasaciones')] %}
+<nav class="mb-6 flex flex-wrap gap-1 rounded-xl border border-slate-200 bg-white p-1 text-sm shadow-sm" aria-label="Administración">
+  {% for ep, etq in secciones %}
+    <a href="{{ url_for(ep) }}" class="rounded-lg px-3 py-2 font-medium {{ 'bg-blue-900 text-white' if request.endpoint == ep or (ep == 'admin.modelos' and request.endpoint == 'admin.modelo_detalle') or (ep == 'admin.dataset' and request.endpoint == 'admin.dataset_form') else 'text-slate-600 hover:bg-slate-100' }}">
+      {{ etq }}{% if ep == 'admin.publicaciones' and avisos.moderacion %} <span class="badge bg-red-500 text-white">{{ avisos.moderacion }}</span>{% endif %}
+    </a>
+  {% endfor %}
+</nav>

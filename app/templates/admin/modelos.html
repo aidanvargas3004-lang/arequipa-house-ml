@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+{% import '_macros.html' as m with context %}
+{% block title %}Modelos de Machine Learning{% endblock %}
+{% block contenido %}
+{% include 'admin/_nav.html' %}
+<h1 class="mb-1 text-2xl font-bold text-slate-900">Modelos de Machine Learning</h1>
+<p class="mb-5 text-sm text-slate-500">Se entrenan Random Forest y Gradient Boosting con el dataset actual, se comparan con MAE, RMSE y R², y se conserva el de menor error.</p>
+
+<div class="card mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+  <div class="text-sm text-slate-600">
+    <p>Dataset actual: <strong>{{ '{:,}'.format(n_registros) }}</strong> registros
+      ({% for o, n in comp.items() %}{{ o }}: {{ '{:,}'.format(n) }}{{ ', ' if not loop.last }}{% endfor %}).</p>
+    <p class="text-xs text-slate-500">El modelo activo sigue atendiendo estimaciones mientras se entrena una nueva versión.</p>
+  </div>
+  <form method="post" action="{{ url_for('admin.modelo_entrenar') }}" class="flex flex-wrap items-center gap-3" data-confirm="¿Entrenar una nueva versión con el dataset actual?">
+    {{ m.csrf() }}
+    <label class="flex items-center gap-2 text-sm text-slate-600"><input type="checkbox" name="activar" value="1" checked class="rounded border-slate-300"> Activar al terminar</label>
+    <button class="btn btn-primary" {{ 'disabled' if en_curso }} data-once>{{ 'Entrenando…' if en_curso else 'Entrenar nueva versión' }}</button>
+  </form>
+</div>
+
+<div class="card overflow-x-auto !p-0">
+  <table class="min-w-full divide-y divide-slate-200 text-sm">
+    <thead class="bg-slate-50"><tr><th class="th">Versión</th><th class="th">Algoritmo</th><th class="th">Estado</th><th class="th">Datos</th><th class="th">MAE</th><th class="th">RMSE</th><th class="th">R²</th><th class="th">Registros</th><th class="th">Creado</th><th class="th"></th></tr></thead>
+    <tbody class="divide-y divide-slate-100">
+    {% for mo in modelos %}
+      <tr class="{{ 'bg-emerald-50' if mo.activo }}">
+        <td class="td font-semibold">v{{ mo.version }} {% if mo.activo %}<span class="badge bg-emerald-600 text-white">Activo</span>{% endif %}</td>
+        <td class="td">{{ mo.algoritmo_nombre }}</td>
+        <td class="td">{{ m.estado_badge(mo.estado) }}{% if mo.error %}<p class="max-w-xs text-xs text-red-700">{{ mo.error }}</p>{% endif %}</td>
+        <td class="td">{{ mo.origen_datos|capitalize if mo.composicion else '—' }}</td>
+        {% if mo.metricas %}{% set g = mo.metricas_ganador %}
+          <td class="td">{{ g.mae|soles }}</td><td class="td">{{ g.rmse|soles }}</td><td class="td">{{ g.r2 }}</td><td class="td">{{ '{:,}'.format(mo.metricas.n_total) }}</td>
+        {% else %}<td class="td" colspan="4">—</td>{% endif %}
+        <td class="td whitespace-nowrap">{{ mo.creado_en|fecha }}{% if mo.creado_por %}<br><span class="text-xs text-slate-500">{{ mo.creado_por.nombre }}</span>{% endif %}</td>
+        <td class="td whitespace-nowrap text-right">
+          {% if mo.estado == 'listo' %}<a class="btn btn-outline btn-sm" href="{{ url_for('admin.modelo_detalle', modelo_id=mo.id) }}">Detalle</a>{% endif %}
+          {% if mo.estado == 'listo' and not mo.activo %}
+            <form class="inline" method="post" action="{{ url_for('admin.modelo_activar', modelo_id=mo.id) }}" data-confirm="¿Activar la versión v{{ mo.version }}?">{{ m.csrf() }}<button class="btn btn-ok btn-sm">Activar</button></form>
+          {% endif %}
+          {% if not mo.activo and mo.estado != 'entrenando' %}
+            <form class="inline" method="post" action="{{ url_for('admin.modelo_eliminar', modelo_id=mo.id) }}" data-confirm="¿Eliminar la versión v{{ mo.version }}?">{{ m.csrf() }}<button class="btn btn-outline btn-sm text-red-600">✕</button></form>
+          {% endif %}
+        </td>
+      </tr>
+    {% else %}<tr><td colspan="10" class="td py-8 text-center text-slate-500">Aún no hay modelos entrenados.</td></tr>{% endfor %}
+    </tbody>
+  </table>
+</div>
+<p class="mt-2 text-xs text-slate-500">Métricas sobre el conjunto de prueba (15 % de los datos, no usado en el entrenamiento ni en la selección).</p>
+{% endblock %}
+{% block scripts %}
+{% if en_curso %}
+<script>
+  (function sondear() {
+    setTimeout(function () {
+      fetch("{{ url_for('admin.modelos_estado') }}", { headers: { 'Accept': 'application/json' } })
+        .then(function (r) { return r.json(); })
+        .then(function (lista) {
+          if (lista.some(function (x) { return x.estado === 'entrenando'; })) { sondear(); } else { location.reload(); }
+        })
+        .catch(function () { sondear(); });
+    }, 3000);
+  })();
+</script>
+{% endif %}
+{% endblock %}

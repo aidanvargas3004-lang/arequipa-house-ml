@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+{% import '_macros.html' as m with context %}
+{% block title %}Tasaciones realizadas{% endblock %}
+{% block contenido %}
+{% include 'admin/_nav.html' %}
+<div class="mb-4 flex items-center justify-between"><h1 class="text-2xl font-bold text-slate-900">Tasaciones realizadas</h1><a class="btn btn-outline" href="{{ url_for('admin.tasaciones_exportar') }}">Exportar CSV</a></div>
+<div class="card overflow-x-auto !p-0">
+  <table class="min-w-full divide-y divide-slate-200">
+    <thead class="bg-slate-50"><tr><th class="th">Fecha</th><th class="th">Usuario</th><th class="th">Vivienda</th><th class="th">Precio estimado</th><th class="th">Modelo</th><th class="th"></th></tr></thead>
+    <tbody class="divide-y divide-slate-100">
+    {% for t in pag.items %}
+      <tr><td class="td whitespace-nowrap">{{ t.creado_en|fecha }}</td><td class="td">{{ t.usuario.email }}</td><td class="td">{{ t.datos.tipo }} · {{ t.datos.distrito }} · {{ t.datos.area_construida|m2 }}</td><td class="td font-semibold text-blue-900">{{ t.precio_estimado|soles }}</td><td class="td">{{ ('v' ~ t.modelo.version) if t.modelo else '—' }}</td><td class="td text-right"><a class="btn btn-outline btn-sm" href="{{ url_for('tasacion.detalle', tasacion_id=t.id) }}">Ver</a></td></tr>
+    {% else %}<tr><td colspan="6" class="td py-8 text-center text-slate-500">Todavía no hay tasaciones.</td></tr>{% endfor %}
+    </tbody>
+  </table>
+</div>
+{{ m.paginacion(pag, 'admin.tasaciones', {}) }}
+{% endblock %}

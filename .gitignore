@@ -1,0 +1,11 @@
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.env
+instance/
+*.db
+*.sqlite3
+.DS_Store
+node_modules/
+package-lock.json

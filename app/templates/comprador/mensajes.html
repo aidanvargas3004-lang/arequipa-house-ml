@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+{% import '_macros.html' as m with context %}
+{% block title %}Mensajes{% endblock %}
+{% block contenido %}
+<h1 class="mb-5 text-2xl font-bold text-slate-900">Mensajes</h1>
+{% if conversaciones %}
+<div class="card divide-y divide-slate-100 !p-0">
+  {% for c in conversaciones %}
+    {% set otro = c.propiedad.vendedor if current_user.id == c.comprador.id else c.comprador %}
+    <a href="{{ url_for('interaccion.conversacion', propiedad_id=c.propiedad.id, comprador_id=c.comprador.id) }}" class="flex items-center gap-4 p-4 hover:bg-slate-50">
+      <span class="flex h-11 w-11 flex-none items-center justify-center rounded-full bg-blue-900 font-bold text-white">{{ otro.nombre[0]|upper }}</span>
+      <div class="min-w-0 flex-1">
+        <p class="flex items-center gap-2 font-semibold text-slate-900">{{ otro.nombre }} {% if c.no_leidos %}<span class="badge bg-red-500 text-white">{{ c.no_leidos }} nuevo{{ '' if c.no_leidos == 1 else 's' }}</span>{% endif %}</p>
+        <p class="truncate text-xs text-blue-800">{{ c.propiedad.titulo }}</p>
+        <p class="truncate text-sm text-slate-500">{{ 'Tú: ' if c.ultimo.autor_id == current_user.id }}{{ c.ultimo.contenido }}</p>
+      </div>
+      <span class="whitespace-nowrap text-xs text-slate-400">{{ c.ultimo.creado_en|fecha }}</span>
+    </a>
+  {% endfor %}
+</div>
+{% else %}
+<div class="card py-12 text-center text-slate-500">Aún no tienes conversaciones. Contacta a un vendedor desde el detalle de una propiedad.</div>
+{% endif %}
+{% endblock %}

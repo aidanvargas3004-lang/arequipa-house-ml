@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+{% import '_macros.html' as m with context %}
+{% block title %}Crear cuenta{% endblock %}
+{% block contenido %}
+<div class="mx-auto max-w-lg">
+  <div class="card">
+    <h1 class="text-2xl font-bold text-slate-900">Crear cuenta</h1>
+    <form method="post" class="mt-5 space-y-4">
+      {{ m.csrf() }}
+      {{ m.campo('nombre', 'Nombre completo', v.nombre, extra='required maxlength="120" autocomplete="name"') }}
+      <div class="grid gap-4 sm:grid-cols-2">
+        {{ m.campo('email', 'Correo electrónico', v.email, 'email', extra='required autocomplete="email"') }}
+        {{ m.campo('telefono', 'Teléfono (opcional)', v.telefono, 'tel', extra='autocomplete="tel"') }}
+      </div>
+      <div>
+        <span class="label">Quiero usar la plataforma como…</span>
+        <div class="grid gap-3 sm:grid-cols-2">
+          {% for valor, titulo, desc in [('comprador','Comprador','Buscar, comparar y contactar'), ('vendedor','Vendedor','Publicar mis viviendas')] %}
+          <label class="flex cursor-pointer items-start gap-3 rounded-lg border border-slate-200 p-3 hover:border-blue-300">
+            <input type="radio" name="rol" value="{{ valor }}" class="mt-1" {{ 'checked' if v.rol == valor }}>
+            <span><span class="block text-sm font-semibold text-slate-900">{{ titulo }}</span><span class="text-xs text-slate-500">{{ desc }}</span></span>
+          </label>
+          {% endfor %}
+        </div>
+      </div>
+      <div class="grid gap-4 sm:grid-cols-2">
+        {{ m.campo('password', 'Contraseña', '', 'password', 'Mínimo 8 caracteres, con letras y números.', 'required minlength="8" autocomplete="new-password"') }}
+        {{ m.campo('password2', 'Repetir contraseña', '', 'password', extra='required minlength="8" autocomplete="new-password"') }}
+      </div>
+      <label class="flex items-start gap-2 text-sm text-slate-600">
+        <input type="checkbox" name="acepta" value="1" class="mt-1 rounded border-slate-300" required>
+        <span>Acepto los <a class="text-blue-800 underline" href="{{ url_for('main.terminos') }}" target="_blank">términos</a> y la <a class="text-blue-800 underline" href="{{ url_for('main.privacidad') }}" target="_blank">política de privacidad</a>.</span>
+      </label>
+      <button class="btn btn-primary w-full" data-once>Crear cuenta</button>
+    </form>
+    <p class="mt-4 text-center text-sm text-slate-600">¿Ya tienes cuenta? <a class="font-semibold text-blue-800 hover:underline" href="{{ url_for('auth.login') }}">Inicia sesión</a></p>
+  </div>
+</div>
+{% endblock %}

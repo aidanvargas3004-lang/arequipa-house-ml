@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% import '_macros.html' as m with context %}
+{% block title %}Conversación{% endblock %}
+{% block contenido %}
+<div class="mx-auto max-w-3xl">
+  <a class="text-sm text-blue-800 hover:underline" href="{{ url_for('interaccion.mensajes') }}">← Todas las conversaciones</a>
+  <div class="card mt-3 flex items-center gap-4">
+    <a href="{{ url_for('propiedades.detalle', propiedad_id=p.id) }}" class="block w-24 flex-none overflow-hidden rounded-lg">{{ m.foto(p, 'h-16 w-full object-cover') }}</a>
+    <div><p class="font-semibold text-slate-900">{{ p.titulo }}</p><p class="text-sm text-slate-500">{{ p.precio|soles }} · conversación con {{ otro.nombre }}</p></div>
+  </div>
+  <div class="card mt-4 space-y-3 bg-slate-50" id="hilo">
+    {% for msg in msgs %}
+      {% set mio = msg.autor_id == current_user.id %}
+      <div class="flex {{ 'justify-end' if mio else 'justify-start' }}">
+        <div class="max-w-[80%] rounded-2xl px-4 py-2 text-sm {{ 'bg-blue-800 text-white' if mio else 'bg-white text-slate-800 shadow-sm' }}">
+          <p class="whitespace-pre-line">{{ msg.contenido }}</p>
+          <p class="mt-1 text-[10px] {{ 'text-blue-200' if mio else 'text-slate-400' }}">{{ msg.autor.nombre.split()[0] }} · {{ msg.creado_en|fecha }}</p>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+  <form method="post" class="mt-4 flex gap-2">
+    {{ m.csrf() }}
+    <textarea name="contenido" rows="2" required maxlength="1000" class="input" placeholder="Escribe tu respuesta…"></textarea>
+    <button class="btn btn-primary self-end" data-once>Enviar</button>
+  </form>
+</div>
+{% endblock %}
+{% block scripts %}<script>var h=document.getElementById('hilo'); if(h){h.scrollIntoView({block:'end'});}</script>{% endblock %}

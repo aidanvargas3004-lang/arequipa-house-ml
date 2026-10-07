@@ -1,0 +1,20 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+  .btn { @apply inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition focus:outline-none focus:ring-2 focus:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50; }
+  .btn-primary { @apply bg-blue-800 text-white hover:bg-blue-900 focus:ring-blue-600; }
+  .btn-accent { @apply bg-amber-500 text-slate-900 hover:bg-amber-400 focus:ring-amber-400; }
+  .btn-outline { @apply border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 focus:ring-slate-400; }
+  .btn-danger { @apply bg-red-600 text-white hover:bg-red-700 focus:ring-red-500; }
+  .btn-ok { @apply bg-emerald-600 text-white hover:bg-emerald-700 focus:ring-emerald-500; }
+  .btn-sm { @apply px-3 py-1.5 text-xs; }
+  .input { @apply w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-200; }
+  .label { @apply mb-1 block text-sm font-medium text-slate-700; }
+  .card { @apply rounded-xl border border-slate-200 bg-white p-5 shadow-sm; }
+  .badge { @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold; }
+  .th { @apply px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-slate-500; }
+  .td { @apply px-3 py-2 text-sm text-slate-700; }
+  .navlink { @apply rounded-md px-3 py-2 text-sm font-medium text-blue-100 hover:bg-blue-800 hover:text-white; }
+}
